@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jogo da Memória RAM</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #4fc3f7;
+      margin-bottom: 0.2em;
+    }
+    #sequence {
+      font-size: 2rem;
+      min-height: 3em;
+      margin: 20px 0;
+      user-select: none;
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+    #inputSection {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      font-size: 1.2rem;
+      padding: 8px;
+      width: 350px;
+      border-radius: 6px;
+      border: 2px solid #4fc3f7;
+      background-color: #222;
+      color: #fff;
+      outline: none;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    input[type="text"]:focus {
+      border-color: #81d4fa;
+    }
+    button {
+      background-color: #4fc3f7;
+      border: none;
+      padding: 10px 25px;
+      font-size: 1.1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+      color: #121212;
+    }
+    button:hover {
+      background-color: #0288d1;
+      color: #e0e0e0;
+    }
+    #message {
+      min-height: 1.5em;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    #score {
+      font-size: 1.3rem;
+      color: #a5d6a7;
+      margin-bottom: 20px;
+    }
+    #concepts {
+      max-width: 420px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: #bbb;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Jogo da Memória RAM</h1>
+
+  <div id="sequence"></div>
+
+  <div id="inputSection">
+    <input type="text" id="userInput" placeholder="Digite a sequência aqui (separe por espaço)" autocomplete="off" />
+    <button id="submitBtn">Enviar</button>
+  </div>
+
+  <button id="startBtn">Iniciar Jogo</button>
+
+  <div id="message"></div>
+  <div id="score">Pontuação: 0</div>
+
+  <div id="concepts">
+    <p><strong>Conceito de Arquitetura de Computadores:</strong></p>
+    <ul>
+      <li><strong>Memória RAM:</strong> armazena dados temporariamente, como você faz aqui lembrando a sequência antes que desapareça.</li>
+      <li><strong>Processador:</strong> executa as instruções do jogo, verificando se sua resposta está correta.</li>
+      <li><strong>Teclado:</strong> dispositivo de entrada para você digitar a resposta.</li>
+      <li><strong>Tela:</strong> dispositivo de saída que mostra a sequência e mensagens do jogo.</li>
+    </ul>
+  </div>
+
+<script>
+  const sequenceDiv = document.getElementById('sequence');
+  const inputSection = document.getElementById('inputSection');
+  const userInput = document.getElementById('userInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const startBtn = document.getElementById('startBtn');
+  const messageDiv = document.getElementById('message');
+  const scoreDiv = document.getElementById('score');
+
+  // Banco de palavras/números para sequência
+  const pool = [
+    "RAM", "CPU", "Bit", "Byte", "Cache", "HD", "SSD", "USB", "Teclado", 
+    "Monitor", "Mouse", "Barramento", "Placa", "Fonte", "Slot", "Dados", "Endereço"
+  ];
+
+  let sequence = [];
+  let score = 0;
+  const displayTime = 3000; // 3 segundos
+  const maxSeqLength = 7;
+
+  function gerarSequencia(tamanho) {
+    const seq = [];
+    for (let i = 0; i < tamanho; i++) {
+      const aleatorio = pool[Math.floor(Math.random() * pool.length)];
+      seq.push(aleatorio);
+    }
+    return seq;
+  }
+
+  function mostrarSequencia(seq) {
+    sequenceDiv.textContent = seq.join(' - ');
+  }
+
+  function limparSequencia() {
+    sequenceDiv.textContent = '';
+  }
+
+  function iniciarRodada() {
+    messageDiv.textContent = '';
+    userInput.value = '';
+    inputSection.style.display = 'none';
+    startBtn.disabled = true;
+
+    const tamanhoSeq = Math.min(3 + Math.floor(score / 2), maxSeqLength);
+    sequence = gerarSequencia(tamanhoSeq);
+    mostrarSequencia(sequence);
+
+    setTimeout(() => {
+      limparSequencia();
+      inputSection.style.display = 'flex';
+      userInput.focus();
+    }, displayTime);
+  }
+
+  function normalizarTexto(texto) {
+    return texto.trim().toLowerCase();
+  }
+
+  function verificarResposta() {
+    const resposta = userInput.value;
+    if (!resposta) {
+      messageDiv.textContent = 'Digite a sequência para continuar.';
+      return;
+    }
+
+    const respostaArray = resposta.split(/\s*-\s*|\s+/).map(normalizarTexto);
+    const sequenciaNormalizada = sequence.map(normalizarTexto);
+
+    if (respostaArray.length !== sequenciaNormalizada.length) {
+      messageDiv.textContent = `Dica: a sequência tem ${sequenciaNormalizada.length} elementos. Tente novamente!`;
+      userInput.value = '';
+      userInput.focus();
+      return;
+    }
+
+    let acertou = true;
+    for (let i = 0; i < sequenciaNormalizada.length; i++) {
+      if (respostaArray[i] !== sequenciaNormalizada[i]) {
+        acertou = false;
+        break;
+      }
+    }
+
+    if (acertou) {
+      score++;
+      scoreDiv.textContent = `Pontuação: ${score}`;
+      messageDiv.textContent = 'Parabéns! Você acertou a sequência.';
+      inputSection.style.display = 'none';
+      startBtn.disabled = false;
+      startBtn.textContent = 'Próxima rodada';
+    } else {
+      messageDiv.textContent = 'Incorreto. Dica: preste atenção na ordem e nos termos.';
+      userInput.value = '';
+      userInput.focus();
+    }
+  }
+
+  startBtn.addEventListener('click', iniciarRodada);
+  submitBtn.addEventListener('click', verificarResposta);
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') verificarResposta();
+  });
+</script>
+
+</body>
+</html>
